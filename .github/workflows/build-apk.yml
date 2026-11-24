@@ -5,29 +5,47 @@ on:
   push:
     paths:
       - 'DonutClient-Android-Source.zip'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Extract project
-        run: unzip -o DonutClient-Android-Source.zip -d .
-
-      - uses: actions/setup-java@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
 
-      - name: Build APK
-        run: gradle -p DonutClient assembleDebug
+      - name: Extract Android project
+        run: unzip -o DonutClient-Android-Source.zip -d .
 
-      - uses: actions/upload-artifact@v4
+      - name: Build APK
+        run: gradle --no-daemon -p DonutClient assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          name: DonutClient-APK
+          name: DonutClient-debug-apk
           path: DonutClient/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
