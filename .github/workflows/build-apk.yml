@@ -1,0 +1,33 @@
+name: Build DonutClient APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'DonutClient-Android-Source.zip'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract project
+        run: unzip -o DonutClient-Android-Source.zip -d .
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Build APK
+        run: gradle -p DonutClient assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DonutClient-APK
+          path: DonutClient/app/build/outputs/apk/debug/app-debug.apk
